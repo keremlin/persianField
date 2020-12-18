@@ -6,62 +6,46 @@ class Persianfield extends React.Component{
         super(props);
         this.state={
             hidden:true,
-            [this.props.identity]:' '
+            [this.props.identity]:' ',
+            isValueExists:false
         };
     }
+    
     selectTypeOfRegex=()=>{
-            switch(this.props.type) {
-                case 'text':
-                 return [
-                            /^[\u0600-\u06FF\u08A0-\u08FF\s]+$/i
-                        ]
-                case 'number':
-                return [
-                            /^\d+$/ // find none digit
-                        ]        
-                  case 'nin':
-                  return[
-                            /^\d{10}$/ // find nin digit
-                        ]
-                    case 'mobilePhone':
-                  return[
-                            /^\s*[0][9]\d{9}$/ // mobile number like 09183134346
-                        ]
-                    case 'phone':
-                  return[
-                            /^\s*[0][1-8]\d{9}$/ // phone number like 09183134346
-                        ]
-                default://text
-                 return [
-                            /^[\u0600-\u06FF\u08A0-\u08FF\s]+$/i
-                        ]
-              }
+        switch (this.props.type) {
+            case 'text':
+                return /^[\u0600-\u06FF\u08A0-\u08FF\s]+$/i
+
+            case 'number':
+                return /^\d+$/ // find none digit
+
+            case 'nin':
+                return /^\d{10}$/ // find nin digit
+
+            case 'mobilePhone':
+                return /^\s*[0][9]\d{9}$/ // mobile number like 09183134346
+
+            case 'phone':
+                return /^\s*[0][1-8]\d{9}$/ // phone number like 09183134346
+
+            default://text
+                return /^[\u0600-\u06FF\u08A0-\u08FF\s]+$/i
+
+        }
     }
 
-    fieldValidation = function (values){// return true if field is valid
-        let exit=true;//return value
-        let stat={ hidden:true};//def true
-        // array of patterns
-        let patterns=this.selectTypeOfRegex();
-        // for each patern do work on each field
-        patterns.forEach(function(item,index,array){
-          // create new regex with current pattern
-          var patt=new RegExp(item);
-          //check the pattern and length
-          if(!patt.test(values)){
-            stat.hidden=false;
-            exit=false;
-          }
-        });//end of foreach
-        this.setState(stat);
-        return exit;
+    fieldValidation = function (values){
+        let result=(new RegExp(this.selectTypeOfRegex())).test(values);
+        this.setState({
+            hidden : result
+            });
+        return result;
       }
 
       onChangeHandler= (event) => {
-        let nam = event.target.name;
-        let val = event.target.value;
-        this.setState({[nam]:val});
-        this.fieldValidation(val);
+        this.setState({[event.target.name]:event.target.value});
+        this.setState({isValueExists:(event.target.value.length>0)})
+        this.props.callback(this.fieldValidation(event.target.value),event.target.value);//return to parent component
       }
 
     render(){
@@ -72,6 +56,9 @@ class Persianfield extends React.Component{
                 <small id={this.props.identity+"help"}  class="form-text text-muted">{this.props.helperMessage}</small>
                 <div class={styles.errr} role="alert" hidden={this.state.hidden}>
                     {this.props.onErrorMessage}
+                </div>
+                <div class={styles.recover} role="recover" hidden={(!this.state.hidden || !this.state.isValueExists)}>
+                    {this.props.onRecoveryMessage}
                 </div>
             </div>
         )
